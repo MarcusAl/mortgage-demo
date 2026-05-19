@@ -31,13 +31,13 @@ module Api
       end
 
       def application_params
-        params.require(:mortgage_application).permit(
+        params.expect(mortgage_application: [
           :annual_income_cents,
           :monthly_expenses_cents,
           :deposit_cents,
           :property_value_cents,
           :term_years
-        )
+        ])
       end
     end
   end

@@ -334,3 +334,23 @@ INCOME_MULTIPLE = 4.5
 **Why not strings?** String-backed enums (available since Rails 7) are more readable in the database but use more storage and are slower to index. For an internal API where the database values are never exposed directly, integer enums are the standard Rails choice.
 
 **Interview talking point**: "I used explicit integer mappings so the enum values are stable — reordering the declaration or adding new values between existing ones won't silently corrupt existing data."
+
+---
+
+## 25. `params.expect` over `params.require.permit`
+
+**Decision**: Use `params.expect(mortgage_application: [...])` instead of `params.require(:mortgage_application).permit(...)`.
+
+**Reasoning**: `params.expect` was introduced in Rails 8 as a stricter replacement. The traditional `require.permit` chain crashes with a `NoMethodError` if someone sends malformed params (e.g., `mortgage_application=123` instead of a hash) — `.permit` doesn't exist on `String`. `params.expect` validates the structure in one call and returns a proper 400 error instead.
+
+**Interview talking point**: "I used `params.expect` because it's the Rails 8 way — it's stricter about parameter shape and gives a clean 400 error instead of crashing on malformed input."
+
+---
+
+## 26. Presenters for JSON Formatting
+
+**Decision**: Extract JSON formatting from controllers into presenter classes (`MortgageApplicationPresenter`, `AssessmentPresenter`).
+
+**Reasoning**: Controllers should handle HTTP concerns (params, status codes, routing). JSON serialisation is a presentation concern. Keeping it in the controller violates single responsibility and makes controllers fat. Presenters are simple POROs with `as_json` — no framework magic, easy to test, easy to reuse across endpoints.
+
+**Interview talking point**: "I separated presentation from HTTP handling. The controller decides what to render and with what status code. The presenter decides how to render it."
