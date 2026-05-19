@@ -5,18 +5,18 @@ module Api
 
       def index
         mortgage_applications = current_user.mortgage_applications.includes(:assessment)
-        render json: { data: mortgage_applications.map { |app| index_json(app) } }
+        render json: { data: mortgage_applications.map { |ma| MortgageApplicationPresenter.new(ma).as_json } }
       end
 
       def show
-        render json: { data: show_json(@mortgage_application) }
+        render json: { data: MortgageApplicationPresenter.new(@mortgage_application).as_json }
       end
 
       def create
         mortgage_application = current_user.mortgage_applications.new(application_params)
 
         if mortgage_application.save
-          render json: { data: show_json(mortgage_application) }, status: :created
+          render json: { data: MortgageApplicationPresenter.new(mortgage_application).as_json }, status: :created
         else
           render json: { errors: mortgage_application.errors.full_messages }, status: :unprocessable_content
         end
@@ -38,47 +38,6 @@ module Api
           :property_value_cents,
           :term_years
         )
-      end
-
-      def index_json(mortgage_application)
-        {
-          id: mortgage_application.id,
-          annual_income_cents: mortgage_application.annual_income_cents,
-          monthly_expenses_cents: mortgage_application.monthly_expenses_cents,
-          deposit_cents: mortgage_application.deposit_cents,
-          property_value_cents: mortgage_application.property_value_cents,
-          term_years: mortgage_application.term_years,
-          assessment_status: mortgage_application.assessment&.status,
-          created_at: mortgage_application.created_at
-        }
-      end
-
-      def show_json(mortgage_application)
-        {
-          id: mortgage_application.id,
-          annual_income_cents: mortgage_application.annual_income_cents,
-          monthly_expenses_cents: mortgage_application.monthly_expenses_cents,
-          deposit_cents: mortgage_application.deposit_cents,
-          property_value_cents: mortgage_application.property_value_cents,
-          term_years: mortgage_application.term_years,
-          created_at: mortgage_application.created_at,
-          assessment: assessment_json(mortgage_application.assessment)
-        }
-      end
-
-      def assessment_json(assessment)
-        return nil unless assessment
-
-        {
-          id: assessment.id,
-          status: assessment.status,
-          decision: assessment.decision,
-          ltv: assessment.ltv,
-          dti: assessment.dti,
-          loan_amount_cents: assessment.loan_amount_cents,
-          max_borrowing_cents: assessment.max_borrowing_cents,
-          explanation: assessment.explanation
-        }
       end
     end
   end

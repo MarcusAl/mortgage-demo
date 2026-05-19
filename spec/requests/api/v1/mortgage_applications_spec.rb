@@ -40,32 +40,17 @@ RSpec.describe "Api::V1::MortgageApplications", type: :request do
   describe "GET /api/v1/mortgage_applications" do
     it "returns only the current user's applications" do
       create_list(:mortgage_application, 2, user: user)
-      other_user = create(:user)
-      create(:mortgage_application, user: other_user)
+      create(:mortgage_application, user: create(:user))
 
       get "/api/v1/mortgage_applications", headers: headers
+
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"].length).to eq(2)
-    end
-
-    it "includes assessment_status when assessed" do
-      mortgage_application = create(:mortgage_application, user: user)
-      create(:assessment, :completed, mortgage_application: mortgage_application)
-
-      get "/api/v1/mortgage_applications", headers: headers
-      expect(response.parsed_body["data"].first["assessment_status"]).to eq("completed")
-    end
-
-    it "returns null assessment_status when not assessed" do
-      create(:mortgage_application, user: user)
-
-      get "/api/v1/mortgage_applications", headers: headers
-      expect(response.parsed_body["data"].first["assessment_status"]).to be_nil
     end
   end
 
   describe "GET /api/v1/mortgage_applications/:id" do
-    it "returns the application with assessment" do
+    it "returns the application with nested assessment when present" do
       mortgage_application = create(:mortgage_application, user: user)
       create(:assessment, :completed, mortgage_application: mortgage_application)
 
@@ -74,17 +59,15 @@ RSpec.describe "Api::V1::MortgageApplications", type: :request do
       expect(data["assessment"]["decision"]).to eq("approved")
     end
 
-    it "returns the application without assessment" do
+    it "returns null assessment when not assessed" do
       mortgage_application = create(:mortgage_application, user: user)
 
       get "/api/v1/mortgage_applications/#{mortgage_application.id}", headers: headers
-      data = response.parsed_body["data"]
-      expect(data["assessment"]).to be_nil
+      expect(response.parsed_body["data"]["assessment"]).to be_nil
     end
 
     it "returns 404 for another user's application" do
-      other_user = create(:user)
-      other_app = create(:mortgage_application, user: other_user)
+      other_app = create(:mortgage_application, user: create(:user))
 
       get "/api/v1/mortgage_applications/#{other_app.id}", headers: headers
       expect(response).to have_http_status(:not_found)
