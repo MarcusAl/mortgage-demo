@@ -44,9 +44,11 @@ The API is now available at `http://localhost:3000`.
 ## Setup (with Docker)
 
 ```bash
-docker-compose up --build
-docker-compose exec web rails db:create db:migrate db:seed
+docker-compose up --build -d
+docker-compose exec web bin/rails db:create db:migrate db:seed
 ```
+
+The API is available at `http://localhost:3000`. Sidekiq runs in a separate container automatically.
 
 ## API Endpoints
 

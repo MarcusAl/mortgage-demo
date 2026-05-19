@@ -25,6 +25,8 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:password@db:5432/mortgage_demo_development
       REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: production
+      SECRET_KEY_BASE: docker-dev-secret-key-base-not-for-production
 
   sidekiq:
     build: .
@@ -35,6 +37,8 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:password@db:5432/mortgage_demo_development
       REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: production
+      SECRET_KEY_BASE: docker-dev-secret-key-base-not-for-production
 
 volumes:
   postgres_data:
