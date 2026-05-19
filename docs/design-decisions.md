@@ -316,3 +316,15 @@ INCOME_MULTIPLE = 4.5
 **Why namespaced, not flat**: p-api uses flat names (`create_credit_product_service.rb`) because many services sit at the root level and need the full name for clarity. With only 2 services in this project, namespacing under `Assessments::` is cleaner and avoids the redundancy of `Assessments::CreateAssessmentService`.
 
 **Interview talking point**: "I used noun-based names because they describe the object's role — a Factory produces things, a Calculator computes things. The namespace provides the domain context, so the class name doesn't need to repeat it."
+
+---
+
+## 24. Explicit Integer Values in Enums
+
+**Decision**: Use explicit integer mappings for all enums (`pending: 0, processing: 1, completed: 2, failed: 3`).
+
+**Reasoning**: Without explicit values, Rails maps enum values by array position. If someone later inserts a new status between `pending` and `processing`, or reorders the list, all existing database rows silently change meaning — a `1` that meant `processing` now means the new status. Explicit integers make the mapping stable and independent of declaration order.
+
+**Why not strings?** String-backed enums (available since Rails 7) are more readable in the database but use more storage and are slower to index. For an internal API where the database values are never exposed directly, integer enums are the standard Rails choice.
+
+**Interview talking point**: "I used explicit integer mappings so the enum values are stable — reordering the declaration or adding new values between existing ones won't silently corrupt existing data."

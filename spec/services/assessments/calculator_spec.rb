@@ -1,21 +1,15 @@
 require "rails_helper"
 
 RSpec.describe Assessments::Calculator, type: :service do
-  subject(:result) { described_class.new(application).call }
+  subject(:result) { described_class.new(mortgage_application).call }
 
   let(:user) { create(:user) }
+  let(:mortgage_application) do
+    create(:mortgage_application, user: user, **application_overrides)
+  end
+  let(:application_overrides) { {} }
 
   describe "approved application" do
-    let(:application) do
-      create(:mortgage_application,
-        user: user,
-        annual_income_cents: 60_000_00,
-        monthly_expenses_cents: 1_500_00,
-        deposit_cents: 50_000_00,
-        property_value_cents: 250_000_00,
-        term_years: 25)
-    end
-
     it "returns approved decision" do
       expect(result[:decision]).to eq(:approved)
     end
@@ -42,15 +36,7 @@ RSpec.describe Assessments::Calculator, type: :service do
   end
 
   describe "declined — LTV too high" do
-    let(:application) do
-      create(:mortgage_application,
-        user: user,
-        annual_income_cents: 60_000_00,
-        monthly_expenses_cents: 1_000_00,
-        deposit_cents: 1_000_00,
-        property_value_cents: 250_000_00,
-        term_years: 25)
-    end
+    let(:application_overrides) { { deposit_cents: 1_000_00 } }
 
     it "returns declined decision" do
       expect(result[:decision]).to eq(:declined)
@@ -62,15 +48,7 @@ RSpec.describe Assessments::Calculator, type: :service do
   end
 
   describe "declined — DTI too high" do
-    let(:application) do
-      create(:mortgage_application,
-        user: user,
-        annual_income_cents: 30_000_00,
-        monthly_expenses_cents: 1_500_00,
-        deposit_cents: 50_000_00,
-        property_value_cents: 250_000_00,
-        term_years: 25)
-    end
+    let(:application_overrides) { { annual_income_cents: 30_000_00 } }
 
     it "returns declined decision" do
       expect(result[:decision]).to eq(:declined)
@@ -82,15 +60,7 @@ RSpec.describe Assessments::Calculator, type: :service do
   end
 
   describe "declined — loan exceeds max borrowing" do
-    let(:application) do
-      create(:mortgage_application,
-        user: user,
-        annual_income_cents: 30_000_00,
-        monthly_expenses_cents: 500_00,
-        deposit_cents: 50_000_00,
-        property_value_cents: 250_000_00,
-        term_years: 25)
-    end
+    let(:application_overrides) { { annual_income_cents: 30_000_00, monthly_expenses_cents: 500_00 } }
 
     it "returns declined decision" do
       expect(result[:decision]).to eq(:declined)
@@ -102,66 +72,49 @@ RSpec.describe Assessments::Calculator, type: :service do
   end
 
   describe "edge cases" do
+    let(:application_overrides) { edge_overrides }
+    let(:edge_overrides) { {} }
+
     it "approves at exactly 95% LTV" do
-      application = create(:mortgage_application,
-        user: user,
-        annual_income_cents: 200_000_00,
-        monthly_expenses_cents: 1_000_00,
-        deposit_cents: 10_000_00,
-        property_value_cents: 200_000_00,
-        term_years: 25)
-      result = described_class.new(application).call
+      mortgage_application = create(:mortgage_application,
+        user: user, annual_income_cents: 200_000_00, monthly_expenses_cents: 1_000_00,
+        deposit_cents: 10_000_00, property_value_cents: 200_000_00, term_years: 25)
+      result = described_class.new(mortgage_application).call
       expect(result[:ltv]).to eq(95.0)
       expect(result[:decision]).to eq(:approved)
     end
 
     it "declines just over 95% LTV" do
-      application = create(:mortgage_application,
-        user: user,
-        annual_income_cents: 200_000_00,
-        monthly_expenses_cents: 1_000_00,
-        deposit_cents: 9_000_00,
-        property_value_cents: 200_000_00,
-        term_years: 25)
-      result = described_class.new(application).call
+      mortgage_application = create(:mortgage_application,
+        user: user, annual_income_cents: 200_000_00, monthly_expenses_cents: 1_000_00,
+        deposit_cents: 9_000_00, property_value_cents: 200_000_00, term_years: 25)
+      result = described_class.new(mortgage_application).call
       expect(result[:ltv]).to be > 95.0
       expect(result[:decision]).to eq(:declined)
     end
 
     it "declines zero deposit (100% LTV)" do
-      application = create(:mortgage_application,
-        user: user,
-        annual_income_cents: 200_000_00,
-        monthly_expenses_cents: 1_000_00,
-        deposit_cents: 0,
-        property_value_cents: 200_000_00,
-        term_years: 25)
-      result = described_class.new(application).call
+      mortgage_application = create(:mortgage_application,
+        user: user, annual_income_cents: 200_000_00, monthly_expenses_cents: 1_000_00,
+        deposit_cents: 0, property_value_cents: 200_000_00, term_years: 25)
+      result = described_class.new(mortgage_application).call
       expect(result[:decision]).to eq(:declined)
     end
 
     it "approves zero monthly expenses (0% DTI)" do
-      application = create(:mortgage_application,
-        user: user,
-        annual_income_cents: 200_000_00,
-        monthly_expenses_cents: 0,
-        deposit_cents: 50_000_00,
-        property_value_cents: 200_000_00,
-        term_years: 25)
-      result = described_class.new(application).call
+      mortgage_application = create(:mortgage_application,
+        user: user, annual_income_cents: 200_000_00, monthly_expenses_cents: 0,
+        deposit_cents: 50_000_00, property_value_cents: 200_000_00, term_years: 25)
+      result = described_class.new(mortgage_application).call
       expect(result[:dti]).to eq(0.0)
       expect(result[:decision]).to eq(:approved)
     end
 
     it "lists multiple decline reasons when multiple rules fail" do
-      application = create(:mortgage_application,
-        user: user,
-        annual_income_cents: 20_000_00,
-        monthly_expenses_cents: 1_500_00,
-        deposit_cents: 1_000_00,
-        property_value_cents: 250_000_00,
-        term_years: 25)
-      result = described_class.new(application).call
+      mortgage_application = create(:mortgage_application,
+        user: user, annual_income_cents: 20_000_00, monthly_expenses_cents: 1_500_00,
+        deposit_cents: 1_000_00, property_value_cents: 250_000_00, term_years: 25)
+      result = described_class.new(mortgage_application).call
       expect(result[:decision]).to eq(:declined)
       expect(result[:explanation]).to include("LTV")
       expect(result[:explanation]).to include("maximum borrowing")

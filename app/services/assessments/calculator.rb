@@ -5,7 +5,7 @@ module Assessments
     INCOME_MULTIPLE = 4.5
 
     def initialize(mortgage_application)
-      @application = mortgage_application
+      @mortgage_application = mortgage_application
     end
 
     def call
@@ -22,24 +22,24 @@ module Assessments
     private
 
     def loan_amount_cents
-      @application.property_value_cents - @application.deposit_cents
+      @mortgage_application.property_value_cents - @mortgage_application.deposit_cents
     end
 
     def ltv
-      return 100.0 if @application.property_value_cents.zero?
+      return 100.0 if @mortgage_application.property_value_cents.zero?
 
-      (loan_amount_cents.to_f / @application.property_value_cents * 100).round(2)
+      (loan_amount_cents.to_f / @mortgage_application.property_value_cents * 100).round(2)
     end
 
     def dti
-      monthly_income = @application.annual_income_cents / 12.0
+      monthly_income = @mortgage_application.annual_income_cents / 12.0
       return 0.0 if monthly_income.zero?
 
-      (@application.monthly_expenses_cents.to_f / monthly_income * 100).round(2)
+      (@mortgage_application.monthly_expenses_cents.to_f / monthly_income * 100).round(2)
     end
 
     def max_borrowing_cents
-      (@application.annual_income_cents * INCOME_MULTIPLE).to_i
+      (@mortgage_application.annual_income_cents * INCOME_MULTIPLE).to_i
     end
 
     def decision
