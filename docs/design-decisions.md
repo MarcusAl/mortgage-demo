@@ -274,7 +274,11 @@ rescue ActiveRecord::RecordNotUnique
 
 **Decision**: `AssessmentJob` receives `mortgage_application_id`, finds the MortgageApplication, accesses the assessment through the association.
 
-**Reasoning**: Follows the convention that jobs find objects by ID and pass them to services. The primary resource being processed is the mortgage application — the assessment is a derived artifact. Finding the application and traversing `application.assessment` is more natural than finding the assessment and traversing back.
+**Assessment flow**: Applications do not have assessments on creation. The assessment is created when the user explicitly triggers one via `POST /assessment`. The Factory service creates a pending Assessment record, then enqueues the job. By the time the job runs, the assessment already exists on the application — Factory created it moments before.
+
+**Why not pass `assessment_id`?** The primary resource is the mortgage application — the assessment is derived output. Finding the application and traversing `.assessment` keeps the job oriented around the domain object being processed. It also makes `discard_on RecordNotFound` semantically clear: the application was deleted (meaningful), not just an orphaned assessment ID (ambiguous).
+
+**Interview talking point**: "The Factory creates the assessment record synchronously so the client gets an immediate response with status: pending. The job picks it up asynchronously. This separation means the client always has a resource to poll."
 
 ---
 

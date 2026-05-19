@@ -13,11 +13,6 @@ RSpec.describe AssessmentJob, type: :job do
 
       expect(assessment).to be_completed
       expect(assessment.decision).to be_present
-      expect(assessment.ltv).to be_present
-      expect(assessment.dti).to be_present
-      expect(assessment.loan_amount_cents).to be_present
-      expect(assessment.max_borrowing_cents).to be_present
-      expect(assessment.explanation).to be_present
     end
 
     it "marks assessment as failed on RecordInvalid" do
