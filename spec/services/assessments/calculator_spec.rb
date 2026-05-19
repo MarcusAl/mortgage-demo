@@ -9,6 +9,13 @@ RSpec.describe Assessments::Calculator, type: :service do
   end
   let(:application_overrides) { {} }
 
+  describe "nil mortgage_application" do
+    it "returns nil" do
+      result = described_class.new(nil).call
+      expect(result).to be_nil
+    end
+  end
+
   describe "approved application" do
     it "returns approved decision" do
       expect(result[:decision]).to eq(:approved)

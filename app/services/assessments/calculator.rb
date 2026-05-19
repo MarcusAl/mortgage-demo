@@ -9,6 +9,8 @@ module Assessments
     end
 
     def call
+      return unless @mortgage_application
+
       {
         ltv: ltv,
         dti: dti,

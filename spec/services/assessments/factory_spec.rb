@@ -5,6 +5,11 @@ RSpec.describe Assessments::Factory, type: :service do
   let(:mortgage_application) { create(:mortgage_application, user: user) }
 
   describe "#call" do
+    it "returns nil when mortgage_application is nil" do
+      result = described_class.new(nil).call
+      expect(result).to be_nil
+    end
+
     it "creates a pending assessment and enqueues a job" do
       expect {
         described_class.new(mortgage_application).call

@@ -5,6 +5,8 @@ module Assessments
     end
 
     def call
+      return unless @mortgage_application
+
       existing = @mortgage_application.assessment
       return existing if existing
 
