@@ -1054,8 +1054,9 @@ class ApplicationController < ActionController::API
   private
 
   def authenticate
-    token = request.headers["Authorization"]&.split(" ")&.last
-    @current_user = User.find_by(api_token: token)
+    authenticate_with_http_token do |token, _options|
+      @current_user = User.find_by(api_token: token)
+    end
 
     render json: { errors: ["Unauthorized"] }, status: :unauthorized unless @current_user
   end

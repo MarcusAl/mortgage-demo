@@ -43,11 +43,13 @@ Running log of architectural decisions made during planning. Use as interview pr
 
 ## 4. Authentication Approach
 
-**Decision**: Simple token auth using `has_secure_token` on User model.
+**Decision**: Simple token auth using `has_secure_token` on User model, with `authenticate_with_http_token` in the controller.
 
 **Reasoning**: The assignment lists auth as optional. `has_secure_token` is built into Rails, requires no gems, and is sufficient to meaningfully scope resources to users and support rate limiting by user ID. Demonstrates the pattern without over-investing in an optional enhancement.
 
-**Interview talking point**: "I used `has_secure_token` because it's built into Rails and sufficient for a demo. In production I'd use Devise or a proper session/JWT setup depending on the client architecture."
+**Token extraction**: Uses Rails' built-in `authenticate_with_http_token` (from `ActionController::HttpAuthentication::Token`) rather than manually parsing the Authorization header. This handles both `Bearer` and `Token` prefixes and is the idiomatic Rails approach.
+
+**Interview talking point**: "I used `has_secure_token` for generation and `authenticate_with_http_token` for extraction — both built into Rails. In production I'd use Devise or a proper session/JWT setup depending on the client architecture."
 
 ---
 

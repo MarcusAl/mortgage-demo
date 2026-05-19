@@ -292,7 +292,7 @@ Singular `resource :assessment` because it's a `has_one` relationship.
 
 `ApplicationController`:
 - `before_action :authenticate`
-- `authenticate` finds user by bearer token from Authorization header
+- `authenticate` uses Rails built-in `authenticate_with_http_token` to extract bearer token
 - Sets `current_user`
 - Returns `401 Unauthorized` with `{ "errors": ["Unauthorized"] }` if token invalid/missing
 
